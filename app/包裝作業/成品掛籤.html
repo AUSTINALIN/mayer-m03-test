@@ -1,0 +1,164 @@
+<html lang="en">
+  <head>
+    <meta content="text/html"/>
+    <meta charset="utf-8"/>
+    <title>美亞報工!</title>
+    <meta http-equiv="Content-Type" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+     </head> 
+<style>
+      .main{
+        /*水平置中*/      
+        display:flex;
+        /*垂直置中*/
+        justify-content:center;
+        text-align:center;
+  }
+       .list{
+         /*水平置中*/      
+        display:flex;
+        /*垂直置中*/
+        justify-content:center;
+        text-align:center;  
+    }
+      
+  </style>
+  <body onload="loadBody()">
+    <div class="main">     
+         <img src="https://cdn.glitch.global/d3fc7112-b364-45f9-8eca-982543985e7b/logo21.png?v=1676527840620"/></div>             
+      <dir class="list">
+          <h>
+            <form>
+                       
+              <font size="7">成品掛籤列印</font><br><br>                     
+              <span style="font-size:20px" color="blue">在製品掛籤</span><br/>
+              <input  id="goods" style="width:200px;height:40px;font-size:15px"  placeholder="請輸入成品掛籤條碼"  size="09" onchange="getSplId()"/><br/><br/>
+                                               
+              <span style="font-size:20px" color="blue">件數:</span><br/>
+              <input id ="piece" type="number" style="width:200px;height:40px;font-size:15px;text-align:right"  size="09"/><br/><br/>
+            
+              <span style="font-size:20px" color="blue">重量:</span><br/>
+              <input id ="weight" type="number" style="width:200px;height:40px;font-size:15px; text-align: right" size="09"/><br/><br/>
+             
+              <button type="reset" style="width:120px;height:40px;font size=15px;">重新輸入</button>
+              <input type="button"  value="資料上傳"  onclick="load()" style="width:120px;height:40px;font-size:15px;"><br/><br/>          
+           
+               <input type="button" onclick="back()" value ="回前一頁"  style="width:180px;height:60px;font-size:25px; color:red;"><br/><br/>           
+                            
+              工號:<span id="show1" ></span><br/>
+              姓名:<span id="show2" ></span><br/>
+              機台:<span id="show3" ></span><br/>
+              班別日期:<span id="show5" ></span><br/>
+              班別:<span id="show4" ></span><br/>
+             
+            </form>
+      <script>
+              document.write("日期:")    
+              date = new Date().toLocaleDateString();
+              document.write(date);
+      </script>   
+          </h>           
+      </dir>
+   
+   <script>
+       
+        var strUrl = window.location.search;  
+        var getPara,paraVal;
+        var aryPara = [];
+        var userName;
+        var requestURL;
+        var pieceOutput;
+        var weightOutput;
+        var loadurl;
+        var request;     
+        var jsonObj;
+        var dateStr;
+        var pieceStr;
+        var docId;
+        var numId;
+        var prodId;
+        var orderId;         
+        var goodsSplId;
+                 
+        
+        
+       loadBody = function (){                         
+          if (strUrl != -1)
+            var getSearch = strUrl.split("?");
+            getPara = getSearch[1].split("&");
+              for (i = 0; i < getPara.length; i++){
+                 paraVal = getPara[i].split("=");
+                 aryPara.push(paraVal[0]);                
+                 aryPara[paraVal[0]]=paraVal[1];
+               }              
+                    
+               document.getElementById("show1").innerHTML=aryPara.userId;
+               userName = decodeURIComponent(aryPara.userName);
+               document.getElementById("show2").innerHTML=userName;
+               document.getElementById("show3").innerHTML=aryPara.machineId;
+               document.getElementById("show4").innerHTML=aryPara.groupId; 
+               document.getElementById("show5").innerHTML=aryPara.dateId; 
+               document.getElementById("goods").focus();
+         }
+     
+        function load(){  
+          loadurl = "http://172.16.1.222:10010/web/services/WEB10R/";      //use any url that have json data   
+          pieceOutput = document.getElementById("piece").value;
+          weightOutput = document.getElementById("weight").value;
+            if(pieceOutput > 99999 || weightOutput > 999999)
+              {alert("件數或重量錯誤!");}                                                                                                                                           
+            else{
+              pieceStr =  pieceOutput.toString().padStart(5,'0');
+              weightStr =  weightOutput.toString().padStart(6,'0');    
+              var Uploadurl = loadurl + "ADD" + aryPara.userId + docId + numId + 
+                  aryPara.dateId +  orderId +  prodId + pieceStr + weightStr +aryPara.machineId;     
+            }
+           if(window.XMLHttpRequest){    
+             requestUpload=new XMLHttpRequest();  //資料上傳                                                                  
+             requestUpload.onreadystatechange = function(){
+               if (requestUpload.readyState == 4  ) 
+                 {
+                  jsonObj = JSON.parse(requestUpload.responseText);      //JSON.parse() returns JSON object
+                  markOutput = jsonObj.oprPrdDtax.prdMrkTxt2;  
+                  reasonOutput = jsonObj.oprPrdDtax.prdResTxt2;  
+                     if(markOutput ==="SUC"){ 
+                       alert(reasonOutput); 
+                       location.reload();
+                     }                                                   
+                     else 
+                       if(markOutput ==="FAU"){
+                         alert(reasonOutput);} 
+                  }        
+               }
+                 requestUpload.open("GET"   , Uploadurl, true);
+                 requestUpload.send();                      
+            }    
+        }
+          function getSplId(){       
+            goodsSplId=document.getElementById("goods").value;             
+            docId = goodsSplId.substr(4,3);  
+            numId = goodsSplId.substr(8,9);  
+            orderId = goodsSplId.substr(31,12);
+            prodId = goodsSplId.substr(44,26);
+            var pieceId = goodsSplId.substr(18,5);            
+            var weightId = goodsSplId.substr(24,6);  
+          
+            if (goodsSplId.length != 100){
+              alert("資料長度不符");}           
+            else{
+            pieceId = pieceId.replace(/^0+/g,"");           
+            document.getElementById("piece").value = pieceId;           
+            weightId = weightId.replace(/^0+/g,"");
+            document.getElementById("weight").value= weightId;}
+          }                 
+                   
+          function back(){                                        
+            requestURL="http://172.16.2.47/webbi/app01/包裝作業/包裝作業.html";
+            requestURL = requestURL+"?" + "userId=" + aryPara.userId + "&userName=" + userName + "&machineId=" + aryPara.machineId +
+                         "&dateId=" + aryPara.dateId +"&groupId=" + aryPara.groupId;    
+            var newWindow=window.open(requestURL);}  
+                              
+    </script>  
+    </body>
+  </html>

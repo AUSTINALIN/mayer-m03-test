@@ -1,0 +1,216 @@
+<html lang="en">
+  <head>
+    <meta content="text/html"/>
+    <meta charset="utf-8"/>
+    <title>美亞報工!</title>
+    <meta http-equiv="Content-Type" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+     </head> 
+<style>
+      .main{
+        /*水平置中*/      
+        display:flex;
+        /*垂直置中*/
+        justify-content:center;
+        text-align:center;
+  }
+       .list{
+         /*水平置中*/      
+        display:flex;
+        /*垂直置中*/
+        justify-content:center;
+        text-align:center;  
+    }
+      
+  </style>
+  <body onload="loadBody()">
+    <div class="main">     
+         <img src="https://cdn.glitch.global/d3fc7112-b364-45f9-8eca-982543985e7b/logo21.png?v=1676527840620"/></div>             
+      <dir class="list">
+          <h>
+            <form>
+                       
+              <font size="7">接頭機作業</font><br><br>                     
+              <span style="font-size:20px" color="blue">讀取狹鋼帶條碼</span><br/>
+              <input  id="steel" style="width:200px;height:40px;font-size:15px"  placeholder="請輸入狹鋼帶條碼"  size="09" onchange="getSplId()"/><br/><br/>
+                                               
+              <span style="font-size:20px" color="blue">件數:</span><br/>
+              <input id ="piece" type="number" style="width:200px;height:40px;font-size:15px;text-align:right"  size="09"/><br/><br/>
+            
+              <span style="font-size:20px" color="blue">重量:</span><br/>
+              <input id ="weight" type="number" style="width:200px;height:40px;font-size:15px; text-align: right" size="09"/><br/><br/>
+             
+              <button type="reset" style="width:120px;height:40px;font size=15px;">重新輸入</button>
+              <input type="button"  value="資料上傳"  onclick="load()" style="width:120px;height:40px;font-size:15px;"><br/><br/>          
+           
+               <input type="button" onclick="back()" value ="回前一頁"  style="width:180px;height:60px;font-size:25px; color:red;"><br/><br/>            
+            
+              工令:<span id="order" ></span><br/>         
+              工號:<span id="show1" ></span><br/>
+              姓名:<span id="show2" ></span><br/>
+              機台:<span id="show3" ></span><br/>
+              班別日期:<span id="show5" ></span><br/>
+              班別:<span id="show4" ></span><br/>
+             
+            </form>
+      <script>
+              document.write("日期:")    
+              date = new Date().toLocaleDateString();
+              document.write(date);
+      </script>   
+          </h>           
+      </dir>
+   
+   <script>
+       
+        var strUrl = window.location.search;  
+        var getPara,paraVal;
+        var aryPara = [];
+        var userName;
+        var requestURL;
+        var pieceOutput;
+        var weightOutput;
+        var loadurl;
+        var request;
+        var steelId;
+        var jsonObj;
+        var dateStr;
+        var pieceStr;
+        var weightStr;
+                 
+        
+        
+       loadBody = function (){                         
+          if (strUrl != -1)
+            var getSearch = strUrl.split("?");
+            getPara = getSearch[1].split("&");
+              for (i = 0; i < getPara.length; i++){
+                 paraVal = getPara[i].split("=");
+                 aryPara.push(paraVal[0]);                
+                 aryPara[paraVal[0]]=paraVal[1];
+               }              
+                    
+               document.getElementById("show1").innerHTML=aryPara.userId;
+               userName = decodeURIComponent(aryPara.userName);
+               document.getElementById("show2").innerHTML=userName;
+               document.getElementById("show3").innerHTML=aryPara.machineId;
+               document.getElementById("show4").innerHTML=aryPara.groupId; 
+               document.getElementById("show5").innerHTML=aryPara.dateId;
+               document.getElementById("order").innerHTML=aryPara.orderId;
+               document.getElementById("steel").focus();
+         }
+     
+        function load(){  
+            loadurl = "http://172.16.1.222:10010/web/services/WEB10R/";      //use any url that have json data 
+            steelId=document.getElementById("steel").value;
+                                                                                  
+            url = loadurl + steelId;  
+                        
+            if(window.XMLHttpRequest){    
+              request=new XMLHttpRequest();                    //for Chrome, mozilla etc  
+              }                 
+               request.onreadystatechange = function(){
+                 if (request.readyState == 4  ) 
+                   {
+                    jsonObj = JSON.parse(request.responseText);      //JSON.parse() returns JSON object
+                    markOutput = jsonObj.chkSplDta.splCoilTxt;
+                    reasonOutput = jsonObj.chkSplDta.splCoilRes; 
+                                                       
+                      if (markOutput ==="SUC"){                                
+                        dateStr = aryPara.dateId.replace(/\-/g,"");   
+                        pieceOutput = document.getElementById("piece").value;
+                        pieceStr = pieceOutput.toString().padStart(5,'0');
+                        
+                        weightOutput = document.getElementById("weight").value; 
+                        weightStr =  weightOutput.toString().padStart(6,'0');                         
+                        aryPara.orderId =  aryPara.orderId.toString().padEnd(12,'_');
+                      
+                                  
+                          requestUpload=new XMLHttpRequest();  //資料上傳                                                              
+                          var Uploadurl = loadurl + aryPara.userId + aryPara.machineId + 
+                              dateStr + aryPara.groupId + aryPara.orderId + steelId + pieceStr + weightStr +"ADD";                         
+                          requestUpload.open("GET", Uploadurl,'_self', true);
+                          requestUpload.send();   
+                          requestUpload.onreadystatechange = function(){                                    
+                            if (requestUpload.readyState == 4  ) {                                          
+                               var jsonUploadObj = JSON.parse(requestUpload.responseText);                                       
+                               var reasonUpload = jsonUploadObj.oprSplDta.resultTxt;
+                               alert(reasonUpload); 
+                               location.reload();
+                             }                                     
+                           }                            
+                        } 
+                        else 
+                          if(markOutput ==="FAU"){
+                            alert(reasonOutput);} 
+                      }  
+                  }
+               request.open("GET" , url, true);
+               request.send();                      
+            }    
+          
+       function getSplId(){  
+            var urlSplCoil = "http://172.16.1.222:10010/web/services/WEB10R/";      //use any url that have json data 
+            var requestSplId;
+            var steelSplId=document.getElementById("steel").value;  
+            var steelString = document.getElementById("steel").value.toString();
+            var steelUrl="";    
+            var steelChar="";    
+                       
+             if (aryPara.orderId.substr(0,1) == "3"){                                     //工令 3 開頭 狹鋼帶開頭加 "3#" 
+              var strSteel = '3_'+ steelSplId.substr(0,10);
+              steelString = strSteel + steelSplId.substr(12,12);}
+                                        
+            if (steelSplId.length != 22){
+              alert("資料長度不符");
+              return;
+            }         
+              
+            if (steelString.length ==22){                          
+              for (i = 1; i <= steelSplId.length ; i++){
+                  j = i - 1;
+                  steelChar = steelString.substr(j , 1);
+                  if   (steelChar >="a" && steelChar <="z") { steelUrl=steelUrl + steelChar; }
+                    else if (steelChar >="A" && steelChar<="Z") { steelUrl=steelUrl + steelChar; }
+                      else if (steelChar >="0" && steelChar<="9") { steelUrl=steelUrl + steelChar; }
+                        else {steelUrl = steelUrl + "_"; }
+                  } 
+            } 
+            
+            document.getElementById("steel").value = steelUrl;                      
+            urlSplCoil = urlSplCoil + steelUrl;
+                        
+            if(window.XMLHttpRequest){    
+              requestSplId=new XMLHttpRequest();                    //for Chrome, mozilla etc  
+              }                 
+               requestSplId.onreadystatechange = function(){
+                 if (requestSplId.readyState == 4  ) 
+                   {
+                      var jsonSplObj = JSON.parse(requestSplId.responseText);      //JSON.parse() returns JSON object
+                          pieceSplId= jsonSplObj.chkSplDta.splCoilPcs;                   
+                          weightSplId= jsonSplObj.chkSplDta.splCoilWgt;
+                          
+                      var markOutput = jsonSplObj.chkSplDta.splCoilTxt;
+                      var reasonOutput = jsonSplObj.chkSplDta.splCoilRes;
+                        if (markOutput ==="SUC"){ 
+                           document.getElementById("piece").value=parseInt(jsonSplObj.chkSplDta.splCoilPcs);
+                           document.getElementById("weight").value=parseInt(jsonSplObj.chkSplDta.splCoilWgt);
+                        } else 
+                          if(markOutput ==="FAU"){
+                            alert(reasonOutput);}                          
+                    }                                               
+                }
+                 requestSplId.open("GET" , urlSplCoil , true );
+                 requestSplId.send();  
+          }              
+        
+         function back(){                                        
+           requestURL="http://172.16.2.47/webbi/app01/接頭作業/接頭機作業.html";
+           requestURL = requestURL+"?" + "userId=" + aryPara.userId + "&userName=" + userName + "&machineId=" + aryPara.machineId +
+                         "&dateId=" + aryPara.dateId +"&groupId=" + aryPara.groupId;    
+           var newWindow=window.open(requestURL,'_self');}  
+                              
+    </script>  
+    </body>
+  </html>

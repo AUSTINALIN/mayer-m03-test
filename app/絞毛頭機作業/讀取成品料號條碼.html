@@ -1,0 +1,207 @@
+<html lang="en">
+  <head>
+    <meta content="text/html"/>
+    <meta charset="utf-8"/>
+    <title>美亞報工!</title>
+    <meta http-equiv="Content-Type" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+     </head> 
+<style>
+      .main{
+        /*水平置中*/      
+        display:flex;
+        /*垂直置中*/
+        justify-content:center;
+        text-align:center;
+  }
+       .list{
+         /*水平置中*/      
+        display:flex;
+        /*垂直置中*/
+        justify-content:center;
+        text-align:center;  
+    }
+      
+  </style>
+  <body onload="loadBody()">
+    <div class="main">     
+         <img src="https://cdn.glitch.global/d3fc7112-b364-45f9-8eca-982543985e7b/logo21.png?v=1676527840620"/></div>             
+      <dir class="list">
+          <h>
+            <form>
+                       
+              <font size="7">絞毛頭機作業</font><br><br>                     
+              <span style="font-size:20px" color="blue">請輸入成品料號條碼</span><br/>
+              <input  id="goods" style="width:250px;height:40px;font-size:15px" size="09" onchange="getSplId()"/><br/>
+              
+              <span  style="font-size:20px;color=blue ;width:200px;height:40px;">品名:</span><br/>
+              <input id ="name"  type="text" disabled = "disabled" style="width:250px;height:40px;font-size:15px;text-align:right;" size="09"/><br/>
+                      
+              <span   style="font-size:20px;color=blue ;width:200px;height:40px;text-align:right;">規格:</span><br/>
+               <input id ="spec" type="text" disabled = "disabled" style="width:280px;height:40px;font-size:15px;text-align:right" size="09"/><br/>
+                                               
+              <span style="font-size:20px" color="blue">件數:</span><br/>
+              <input id ="piece" type="number" style="width:250px;height:40px;font-size:15px;text-align:right"  size="09"/><br/>
+            
+              <span style="font-size:20px" color="blue">重量:</span><br/>
+              <input id ="weight" type="number"  style="width:250px;height:40px;font-size:15px; text-align: right" size="09"/><br/><br/>
+             
+              <button type="reset" style="width:120px;height:40px;font size=15px;">重新輸入</button>
+              <input type="button"  value="資料上傳"  onclick="load()" style="width:120px;height:40px;font-size:15px;"><br/><br/>          
+           
+              <input type="button" onclick="back()" value ="回前一頁"  style="width:180px;height:60px;font-size:25px; color:red;"><br/>           
+            
+              工令:<span id="order" ></span><br/>         
+              工號:<span id="show1" ></span><br/>
+              姓名:<span id="show2" ></span><br/>
+              機台:<span id="show3" ></span><br/>
+              班別日期:<span id="show5" ></span><br/>
+              班別:<span id="show4" ></span><br/>             
+              
+            </form>
+            
+              <script>
+                document.write("日期:")    
+                date = new Date().toLocaleDateString();
+                document.write(date);
+              </script> 
+            
+          </h>           
+      </dir>
+   
+   <script>
+       
+        var strUrl = window.location.search; 
+        var getPara,paraVal;
+        var aryPara = [];
+        var userName;
+        var requestURL;
+        var pieceOutput;
+        var weightOutput;
+        var loadurl;
+        var request;
+        var steelId;
+        var jsonObj;
+        var dateStr;
+        var pieceStr;
+        var weightStr;               
+             
+       loadBody = function (){                         
+          if (strUrl != -1){
+            var getSearch = strUrl.split("?");
+            getPara = getSearch[1].split("&");
+              for (i = 0; i < getPara.length; i++){
+                 paraVal = getPara[i].split("=");
+                 aryPara.push(paraVal[0]);                
+                 aryPara[paraVal[0]]=paraVal[1];
+               }                            
+               var orderId1= aryPara.orderId
+               var orderId1= orderId1.replace(/\_/g,"");               
+               document.getElementById("show1").innerHTML=aryPara.userId;
+               userName = decodeURIComponent(aryPara.userName);
+               document.getElementById("show2").innerHTML=userName;
+               document.getElementById("show3").innerHTML=aryPara.machineId;
+               document.getElementById("show4").innerHTML=aryPara.groupId; 
+               document.getElementById("show5").innerHTML=aryPara.dateId;
+               document.getElementById("order").innerHTML=orderId1;  
+               document.getElementById("goods").focus();
+            }
+       }
+     
+        function load(){  
+            loadurl = "http://172.16.1.222:10010/web/services/WEB10R/";      //use any url that have json data 
+            dateStr = aryPara.dateId.replace(/\-/g,"");   
+            pieceOutput = document.getElementById("piece").value;            
+              if (pieceOutput< 1 || pieceOutput > 99999){               
+                 alert("件數錯誤!!");}             
+              else { 
+              pieceStr = pieceOutput.toString().padStart(5,0); }                                           
+                        
+            weightOutput = document.getElementById("weight").value;             
+              if ( weightOutput< 1 || weightOutput > 999999){                  
+                 alert("重量錯誤!!");} 
+              else { 
+                 weightStr = weightOutput.toString().padStart(6,0);}               
+          
+              goodsId=document.getElementById("goods").value;
+          
+              url = loadurl +  aryPara.userId + aryPara.machineId + dateStr + aryPara.groupId + aryPara.orderId + goodsId + pieceStr + weightStr +"ADD";
+          
+            if(window.XMLHttpRequest){    
+              request=new XMLHttpRequest();                    //for Chrome, mozilla etc  
+              }                 
+              request.onreadystatechange = function(){
+                if (request.readyState == 4  ) 
+                  {
+                   jsonObj = JSON.parse(request.responseText);      //JSON.parse() returns JSON object
+                   markOutput = jsonObj.oprPrdDta.prdMrkTxt1;
+                   reasonOutput = jsonObj.oprPrdDta.prdResTxt1;                                                    
+                     if (markOutput ==="SUC"){                       
+                        alert(reasonOutput); 
+                        location.reload();
+                      }           
+                      else 
+                        if(markOutput ==="FAU"){
+                          alert(reasonOutput);} 
+                     }     
+                 }
+              request.open("GET" , url, true);
+              request.send();                      
+            }    
+          
+       function getSplId(){  
+            var urlSplCoil = "http://172.16.1.222:10010/web/services/WEB10R/";      //use any url that have json data 
+            var requestSplId;
+            var goodsSplId = document.getElementById("goods").value;
+            var goodsString = document.getElementById("goods").value; ;
+            var goodsUrl="";    
+            var goodsChar=""; 
+                                                                 
+            if (goodsSplId.length > 26){
+              alert("資料長度不符");
+              return;
+            }         
+               
+            if (goodsString.length < 27){                          
+              for (i = 1; i < 27 ; i++){
+                  j = i - 1;
+                  goodsChar = goodsString.substr(j , 1);
+                  if (goodsChar >="a" && goodsChar <="z") { goods= goodsUrl + goodsChar; }
+                     else if (goodsChar >="A" && goodsChar<="Z") { goodsUrl= goodsUrl + goodsChar; }
+                       else if (goodsChar >="0" && goodsChar<="9") { goodsUrl= goodsUrl + goodsChar; }
+                         else {goodsUrl = goodsUrl + "_"; }
+                  } 
+            }        
+            urlSplCoil = urlSplCoil + aryPara.orderId + goodsUrl;
+            
+            if(window.XMLHttpRequest){    
+              requestSplId=new XMLHttpRequest();                    //for Chrome, mozilla etc  
+              }                 
+              requestSplId.onreadystatechange = function(){
+                if (requestSplId.readyState == 4  ){
+                   var jsonSplObj = JSON.parse(requestSplId.responseText);      //JSON.parse() returns JSON object  
+                   var markOutput = jsonSplObj.chkPrdDta.prdMrkTxt;
+                   var reasonOutput = jsonSplObj.chkPrdDta.prdResTxt;
+                     if (markOutput ==="SUC"){ 
+                        document.getElementById("goods").value = goodsUrl;
+                        document.getElementById("name").value=jsonSplObj.chkPrdDta.prdSpec;
+                        document.getElementById("spec").value=jsonSplObj.chkPrdDta.prdSize;}                              
+                     else 
+                       if(markOutput ==="FAU"){
+                         alert(reasonOutput);}                          
+                     }                                               
+                }
+               requestSplId.open("GET" , urlSplCoil , true );
+               requestSplId.send();  
+          }           
+               
+          function back(){                                      
+            requestURL="http://172.16.2.47/webbi/app01/絞毛頭機作業/讀取工令.html";
+            requestURL = requestURL+"?" + "userId=" + aryPara.userId + "&userName=" + userName + "&machineId=" + aryPara.machineId +
+                         "&dateId=" + aryPara.dateId +"&groupId=" + aryPara.groupId;    
+            var newWindow=window.open(requestURL,'_self');}  
+                              
+    </script>  
+    </body>
+  </html>
